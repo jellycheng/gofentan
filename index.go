@@ -20,6 +20,9 @@ type FenTan struct {
 
 // SetCommonVal 设置共同分摊值
 func (m *FenTan)SetCommonVal(n int64) *FenTan {
+	if n<0 {
+		return m
+	}
 	m.commonVal = n
 	return m
 }
@@ -44,7 +47,7 @@ func (m *FenTan)IsFinish() bool {
 	return m.isFinish
 }
 
-// StartFenTanV1 开始计算分摊
+// StartFenTanV1 开始计算分摊,最小优先分摊，但如果不够分摊则调整最大优先分摊
 func (m *FenTan)StartFenTanV1() *FenTan {
 	if m.isFinish {
 		return m
@@ -68,6 +71,10 @@ func (m *FenTan)StartFenTanV1() *FenTan {
 		m.isFinish = true
 		return m
 	}
+	if int64(validNum) > m.commonVal { // 不够分，调整最大优先
+		m.isFinish = false
+		return m.StartFenTanV2()
+	}
 	// 比例： 共同分摊值/总值
 	commonValDecimal := decimal.NewFromFloat(float64(m.commonVal))
 	totalValDecimal := decimal.NewFromFloat(float64(totalVal))
@@ -85,10 +92,72 @@ func (m *FenTan)StartFenTanV1() *FenTan {
 		alreadyNum++
 		if alreadyNum == validNum { // 最后一个分摊，用减法
 			tmpFentanDecimal := commonValDecimal.Sub(alreadyCommonValDecimal)
-			alreadyCommonValDecimal = alreadyCommonValDecimal.Add(tmpFentanDecimal)
 			tmpFentan,_ := tmpFentanDecimal.Float64()
 			v.fentanVal = int64(tmpFentan)
 			m.dataStore.Store(v.masterDataNum, v)
+			alreadyCommonValDecimal = alreadyCommonValDecimal.Add(tmpFentanDecimal)
+		} else {
+			selfTotal := v.Price * v.Num
+			tmpFentanDecimal := rateDecimal.Mul(decimal.NewFromFloat(float64(selfTotal))).RoundCeil(0)
+			tmpFentanDecimal = decimal.Min(tmpFentanDecimal, commonValDecimal.Sub(alreadyCommonValDecimal))
+			tmpFentan,_ := tmpFentanDecimal.Float64()
+			v.fentanVal = int64(tmpFentan)
+			m.dataStore.Store(v.masterDataNum, v)
+			alreadyCommonValDecimal = alreadyCommonValDecimal.Add(tmpFentanDecimal)
+		}
+
+	}
+
+	alreadyCommonVal,_ := alreadyCommonValDecimal.Float64()
+	m.alreadyCommonVal = int64(alreadyCommonVal)
+
+	m.isFinish = true
+	return m
+}
+
+// StartFenTanV2 开始计算分摊,最大优先分摊
+func (m *FenTan)StartFenTanV2() *FenTan {
+	if m.isFinish {
+		return m
+	}
+	// 有效记录数
+	validNum := 0
+	// 总值
+	var totalVal int64 = 0
+	var tmpSliceData FentanDtoSortV2
+	m.dataStore.Range(func(key, value interface{}) bool {
+		ftDto := value.(FentanDto)
+		if ftDto.Num>0 && ftDto.Price>0 {
+			validNum++
+			totalVal += ftDto.Price * ftDto.Num
+			ftDto.masterDataNum = key
+			tmpSliceData = append(tmpSliceData, ftDto)
+		}
+		return true
+	})
+	if totalVal == 0 || m.commonVal == 0 {
+		m.isFinish = true
+		return m
+	}
+	// 比例： 共同分摊值/总值
+	commonValDecimal := decimal.NewFromFloat(float64(m.commonVal))
+	totalValDecimal := decimal.NewFromFloat(float64(totalVal))
+	rateDecimal := commonValDecimal.DivRound(totalValDecimal, 2)
+	// 已经分摊共同分摊值
+	alreadyCommonValDecimal := decimal.NewFromFloat(0)
+	// 排序
+	sort.Sort(tmpSliceData)
+	// 已分摊个数
+	alreadyNum := 0
+	// 开始分摊
+	for _, v := range tmpSliceData {
+		alreadyNum++
+		if alreadyNum == validNum { // 最后一个分摊，用减法
+			tmpFentanDecimal := commonValDecimal.Sub(alreadyCommonValDecimal)
+			tmpFentan,_ := tmpFentanDecimal.Float64()
+			v.fentanVal = int64(tmpFentan)
+			m.dataStore.Store(v.masterDataNum, v)
+			alreadyCommonValDecimal = alreadyCommonValDecimal.Add(tmpFentanDecimal)
 		} else {
 			selfTotal := v.Price * v.Num
 			tmpFentanDecimal := rateDecimal.Mul(decimal.NewFromFloat(float64(selfTotal))).RoundCeil(0)

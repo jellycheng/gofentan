@@ -29,9 +29,130 @@
 
 ```
 
-## 示例
+## Install下载依赖
+```
+go get -u github.com/jellycheng/gofentan
+或者
+GO111MODULE=on GOPROXY=https://goproxy.cn/,direct go get -u github.com/jellycheng/gofentan
+
 ```
 
+## 示例1 - map key为字符串
+```
+package main
+
+import (
+	"fmt"
+	"github.com/jellycheng/gofentan"
+)
+
+func main() {
+	fenTanObj := gofentan.NewFenTan()
+	// 共同分摊值
+	fenTanObj.SetCommonVal(2)
+	// 需要参与分摊的数据，如果Price或Num值<=0则分摊算法给该项分摊值为0
+	data := map[string]gofentan.FentanDto{
+		"sku_100":{Price: 1, Num: 1},
+		"sku_200":{Price: 2, Num: 1},
+		"sku_400":{Price: 1, Num: 3},
+	}
+	for k, v := range data {
+		fenTanObj.AddData(k, v)
+	}
+	fenTanObj.StartFenTanV1() // 开始分摊
+	// 获取某一个值的分摊结果
+	if v,err := fenTanObj.GetData("sku_200");err == nil {
+		fmt.Println("sku_200的分摊结果：", v.GetFentanVal())
+	}
+	// 获取所有分摊结果
+	fenTanObj.GetAllData().Range(func(key, value interface{}) bool {
+		fmt.Println("key=", key, fmt.Sprintf(";分摊结果:%+v", value))
+
+		return true
+	})
+	fmt.Println("获取共同分摊值：", fenTanObj.GetCommonVal())
+	fmt.Println("完成共同分摊值：", fenTanObj.GetAlreadyCommonVal())
+
+}
 
 ```
 
+## 示例2 - map key为int64
+```
+package main
+
+import (
+	"fmt"
+	"github.com/jellycheng/gofentan"
+)
+
+func main() {
+	fenTanObj := gofentan.NewFenTan()
+	// 共同分摊值
+	fenTanObj.SetCommonVal(2)
+	// 需要参与分摊的数据，如果Price或Num值<=0则分摊算法给该项分摊值为0
+	data := map[int64]gofentan.FentanDto{
+		123:{Price: 1, Num: 1},
+		200:{Price: 2, Num: 1},
+		987654321:{Price: 1, Num: 3},
+	}
+	for k, v := range data {
+		fenTanObj.AddData(k, v)
+	}
+	fenTanObj.StartFenTanV1() // 开始分摊
+	// 获取某一个值的分摊结果
+	if v,err := fenTanObj.GetData(int64(200));err == nil {
+		fmt.Println("200的分摊结果：", v.GetFentanVal())
+	}
+	// 获取所有分摊结果
+	fenTanObj.GetAllData().Range(func(key, value interface{}) bool {
+		fmt.Println("key=", key, fmt.Sprintf(";分摊结果:%+v", value))
+
+		return true
+	})
+	fmt.Println("获取共同分摊值：", fenTanObj.GetCommonVal())
+	fmt.Println("完成共同分摊值：", fenTanObj.GetAlreadyCommonVal())
+
+}
+
+```
+
+## 示例3 - map key为int
+```
+package main
+
+import (
+	"fmt"
+	"github.com/jellycheng/gofentan"
+)
+
+func main() {
+	fenTanObj := gofentan.NewFenTan()
+	// 共同分摊值
+	fenTanObj.SetCommonVal(2)
+	// 需要参与分摊的数据，如果Price或Num值<=0则分摊算法给该项分摊值为0
+	data := map[int]gofentan.FentanDto{
+		123:{Price: 1, Num: 1},
+		200:{Price: 2, Num: 1},
+		987654321:{Price: 1, Num: 3},
+	}
+	for k, v := range data {
+		fenTanObj.AddData(k, v)
+	}
+	fenTanObj.StartFenTanV1() // 开始分摊
+	// 获取某一个值的分摊结果
+	if v,err := fenTanObj.GetData(200);err == nil {
+		fmt.Println("200的分摊结果：", v.GetFentanVal())
+	}
+	// 获取所有分摊结果
+	fenTanObj.GetAllData().Range(func(key, value interface{}) bool {
+		fmt.Println("key=", key, fmt.Sprintf(";分摊结果:%+v", value))
+
+		return true
+	})
+	fmt.Println("获取共同分摊值：", fenTanObj.GetCommonVal())
+	fmt.Println("完成共同分摊值：", fenTanObj.GetAlreadyCommonVal())
+
+}
+
+```

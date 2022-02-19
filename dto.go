@@ -33,3 +33,21 @@ func (m FentanDtoSortV1) Swap(i, j int) {
 	m[i], m[j] = m[j], m[i]
 }
 
+type FentanDtoSortV2 []FentanDto
+func (m FentanDtoSortV2) Len() int {
+	return len(m)
+}
+
+// Less 在同等权重下，最大优先
+func (m FentanDtoSortV2) Less(i, j int) bool {
+	if m[i].Weight != m[j].Weight {
+		return m[i].Weight > m[j].Weight
+	}
+	iVal := m[i].Price * m[i].Num
+	jVal := m[j].Price * m[j].Num
+	return iVal > jVal
+}
+
+func (m FentanDtoSortV2) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
