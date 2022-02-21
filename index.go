@@ -14,6 +14,8 @@ type FenTan struct {
 	commonVal int64
 	// 实际完成共同分摊值
 	alreadyCommonVal int64
+	// 参加分摊的总值
+	totalVal int64
 	// 是否完成分摊
 	isFinish bool
 }
@@ -34,6 +36,10 @@ func (m *FenTan)GetCommonVal() int64 {
 
 func (m *FenTan)GetAlreadyCommonVal() int64 {
 	return m.alreadyCommonVal
+}
+
+func (m *FenTan)GetTotalVal() int64 {
+	return m.totalVal
 }
 
 // AddData 添加分摊数据
@@ -67,6 +73,7 @@ func (m *FenTan)StartFenTanV1() *FenTan {
 		}
 		return true
 	})
+	m.totalVal = totalVal
 	if totalVal == 0 || m.commonVal == 0 {
 		m.isFinish = true
 		return m
@@ -135,6 +142,7 @@ func (m *FenTan)StartFenTanV2() *FenTan {
 		}
 		return true
 	})
+	m.totalVal = totalVal
 	if totalVal == 0 || m.commonVal == 0 {
 		m.isFinish = true
 		return m

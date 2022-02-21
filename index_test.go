@@ -10,15 +10,15 @@ import (
 func TestNewFenTan(t *testing.T) {
 	fenTanObj := NewFenTan()
 	// 共同分摊值
-	fenTanObj.SetCommonVal(123)
+	fenTanObj.SetCommonVal(1230)
 	// 需要参与分摊的数据，如果Price或Num值<=0则分摊算法给该项分摊值为0
 	data := map[string]FentanDto{
-			"sku_100":{Price: 1, Num: 1},
-			"sku_200":{Price: 1, Num: 1},
+			"sku_100":{Price: 990, Num: 1},
+			"sku_200":{Price: 100, Num: 1},
 			"sku_300":{Price: 3, Num: 0},
-			"sku_400":{Price: 1, Num: 2},
+			"sku_400":{Price: 100, Num: 2},
 	}
-	data["sku_500"] = FentanDto{Price: 2, Num: 2}
+	data["sku_500"] = FentanDto{Price: 200, Num: 2}
 	for k, v := range data {
 		fenTanObj.AddData(k, v)
 	}
@@ -35,6 +35,7 @@ func TestNewFenTan(t *testing.T) {
 	})
 	fmt.Println("设置共同分摊值：", fenTanObj.GetCommonVal())
 	fmt.Println("完成共同分摊值：", fenTanObj.GetAlreadyCommonVal())
+	fmt.Println("参与分摊的总值：", fenTanObj.GetTotalVal())
 }
 
 // go test -run="TestFentanDtoSortV1"
